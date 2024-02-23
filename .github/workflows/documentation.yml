@@ -1,0 +1,39 @@
+name: documentation
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y python3-pip doxygen python3-sphinx \
+              && pip install \
+              sphinx \
+              sphinx_rtd_theme \
+              myst_parser \
+              sphinx-autobuild \
+              sphinxcontrib-bibtex \
+              sphinx_sitemap breathe \
+              paramiko
+
+      - name: Sphinx build
+        run: |
+          sphinx-build docs/source docs/build
+          
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _build/
+          force_orphan: true
